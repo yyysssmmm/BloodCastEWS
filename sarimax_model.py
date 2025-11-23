@@ -10,7 +10,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from pmdarima import auto_arima
-from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_absolute_percentage_error,
+)
 import warnings
 import os
 from datetime import datetime
@@ -28,12 +32,20 @@ print("=" * 80)
 # ============================================
 # 1. 입력 변수 정의
 # ============================================
+
+# print("\n1. 입력 변수 정의...")
+# GENDER = "남자"
+# BLOOD_TYPE = "O+"
+# BLOOD_CENTER = "서울동부"
+# AGE_GROUP = "30~39"
+# OCCUPATION = "회사원"
+
 print("\n1. 입력 변수 정의...")
 GENDER = "남자"
-BLOOD_TYPE = "O+"
-BLOOD_CENTER = "서울동부"
-AGE_GROUP = "30~39"
-OCCUPATION = "회사원"
+BLOOD_TYPE = "A+"
+BLOOD_CENTER = "부산"
+AGE_GROUP = "20~29"
+OCCUPATION = "대학생"
 
 print(f"   - 성별: {GENDER}")
 print(f"   - 혈액형별: {BLOOD_TYPE}")
@@ -87,7 +99,9 @@ dates = pd.date_range(start="2005-01", end="2024-12", freq="MS")  # MS = Month S
 ts_series = pd.Series(ts_data, index=dates)
 
 print(f"   - 시계열 길이: {len(ts_series)}개월")
-print(f"   - 기간: {ts_series.index[0].strftime('%Y-%m')} ~ {ts_series.index[-1].strftime('%Y-%m')}")
+print(
+    f"   - 기간: {ts_series.index[0].strftime('%Y-%m')} ~ {ts_series.index[-1].strftime('%Y-%m')}"
+)
 print(f"   - 최소값: {ts_series.min():.0f}")
 print(f"   - 최대값: {ts_series.max():.0f}")
 print(f"   - 평균값: {ts_series.mean():.2f}")
@@ -103,8 +117,12 @@ TEST_MONTHS = 12  # 필요시 변경 가능
 train_data = ts_series[:-TEST_MONTHS]
 test_data = ts_series[-TEST_MONTHS:]
 
-print(f"   - Train 데이터: {len(train_data)}개월 ({train_data.index[0].strftime('%Y-%m')} ~ {train_data.index[-1].strftime('%Y-%m')})")
-print(f"   - Test 데이터: {len(test_data)}개월 ({test_data.index[0].strftime('%Y-%m')} ~ {test_data.index[-1].strftime('%Y-%m')})")
+print(
+    f"   - Train 데이터: {len(train_data)}개월 ({train_data.index[0].strftime('%Y-%m')} ~ {train_data.index[-1].strftime('%Y-%m')})"
+)
+print(
+    f"   - Test 데이터: {len(test_data)}개월 ({test_data.index[0].strftime('%Y-%m')} ~ {test_data.index[-1].strftime('%Y-%m')})"
+)
 
 # ============================================
 # 5. Auto ARIMA로 최적 파라미터 찾기
@@ -217,15 +235,62 @@ fig, axes = plt.subplots(2, 1, figsize=(15, 12))
 
 # 전체 시계열 및 예측
 ax1 = axes[0]
-ax1.plot(train_data.index, train_data.values, label="Train 데이터", color="blue", linewidth=2)
-ax1.plot(train_fitted.index, train_fitted.values, label="Train Fitted", color="green", linestyle="--", linewidth=1.5)
-ax1.plot(test_data.index, test_data.values, label="Test 데이터 (실제)", color="orange", linewidth=2)
-ax1.plot(forecast_mean.index, forecast_mean.values, label="Test 예측", color="red", linestyle="--", linewidth=2)
-ax1.fill_between(forecast_ci.index, forecast_ci.iloc[:, 0], forecast_ci.iloc[:, 1], alpha=0.3, color="red", label="95% 신뢰구간")
-ax1.plot(future_dates, future_mean.values, label="2025년 예측", color="purple", linestyle="--", linewidth=2)
-ax1.fill_between(future_ci.index, future_ci.iloc[:, 0], future_ci.iloc[:, 1], alpha=0.3, color="purple", label="95% 신뢰구간 (2025)")
+ax1.plot(
+    train_data.index, train_data.values, label="Train 데이터", color="blue", linewidth=2
+)
+ax1.plot(
+    train_fitted.index,
+    train_fitted.values,
+    label="Train Fitted",
+    color="green",
+    linestyle="--",
+    linewidth=1.5,
+)
+ax1.plot(
+    test_data.index,
+    test_data.values,
+    label="Test 데이터 (실제)",
+    color="orange",
+    linewidth=2,
+)
+ax1.plot(
+    forecast_mean.index,
+    forecast_mean.values,
+    label="Test 예측",
+    color="red",
+    linestyle="--",
+    linewidth=2,
+)
+ax1.fill_between(
+    forecast_ci.index,
+    forecast_ci.iloc[:, 0],
+    forecast_ci.iloc[:, 1],
+    alpha=0.3,
+    color="red",
+    label="95% 신뢰구간",
+)
+ax1.plot(
+    future_dates,
+    future_mean.values,
+    label="2025년 예측",
+    color="purple",
+    linestyle="--",
+    linewidth=2,
+)
+ax1.fill_between(
+    future_ci.index,
+    future_ci.iloc[:, 0],
+    future_ci.iloc[:, 1],
+    alpha=0.3,
+    color="purple",
+    label="95% 신뢰구간 (2025)",
+)
 
-ax1.set_title(f"SARIMAX 모델 예측 결과\n{GENDER}, {BLOOD_TYPE}, {BLOOD_CENTER}, {AGE_GROUP}, {OCCUPATION}", fontsize=14, fontweight="bold")
+ax1.set_title(
+    f"SARIMAX 모델 예측 결과\n{GENDER}, {BLOOD_TYPE}, {BLOOD_CENTER}, {AGE_GROUP}, {OCCUPATION}",
+    fontsize=14,
+    fontweight="bold",
+)
 ax1.set_xlabel("날짜", fontsize=12)
 ax1.set_ylabel("헌혈 건수", fontsize=12)
 ax1.legend(loc="best", fontsize=10)
@@ -236,8 +301,22 @@ ax2 = axes[1]
 x_pos = np.arange(len(test_data))
 width = 0.35
 
-ax2.bar(x_pos - width / 2, test_data.values, width, label="실제값", color="orange", alpha=0.7)
-ax2.bar(x_pos + width / 2, forecast_mean.values, width, label="예측값", color="red", alpha=0.7)
+ax2.bar(
+    x_pos - width / 2,
+    test_data.values,
+    width,
+    label="실제값",
+    color="orange",
+    alpha=0.7,
+)
+ax2.bar(
+    x_pos + width / 2,
+    forecast_mean.values,
+    width,
+    label="예측값",
+    color="red",
+    alpha=0.7,
+)
 ax2.set_xlabel("월", fontsize=12)
 ax2.set_ylabel("헌혈 건수", fontsize=12)
 ax2.set_title("Test 데이터 실제값 vs 예측값 비교", fontsize=12, fontweight="bold")
@@ -299,9 +378,9 @@ with open(evaluation_filename, "w", encoding="utf-8") as f:
     f.write("=" * 80 + "\n")
     f.write("SARIMAX 모델 평가 결과\n")
     f.write("=" * 80 + "\n\n")
-    
+
     f.write(f"생성 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("입력 변수\n")
     f.write("=" * 80 + "\n")
@@ -311,19 +390,25 @@ with open(evaluation_filename, "w", encoding="utf-8") as f:
     f.write(f"연령대: {AGE_GROUP}\n")
     f.write(f"직업: {OCCUPATION}\n")
     f.write(f"Segment: {SEGMENT}\n\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("데이터 정보\n")
     f.write("=" * 80 + "\n")
     f.write(f"전체 시계열 길이: {len(ts_series)}개월\n")
-    f.write(f"기간: {ts_series.index[0].strftime('%Y-%m')} ~ {ts_series.index[-1].strftime('%Y-%m')}\n")
-    f.write(f"Train 데이터: {len(train_data)}개월 ({train_data.index[0].strftime('%Y-%m')} ~ {train_data.index[-1].strftime('%Y-%m')})\n")
-    f.write(f"Test 데이터: {len(test_data)}개월 ({test_data.index[0].strftime('%Y-%m')} ~ {test_data.index[-1].strftime('%Y-%m')})\n")
+    f.write(
+        f"기간: {ts_series.index[0].strftime('%Y-%m')} ~ {ts_series.index[-1].strftime('%Y-%m')}\n"
+    )
+    f.write(
+        f"Train 데이터: {len(train_data)}개월 ({train_data.index[0].strftime('%Y-%m')} ~ {train_data.index[-1].strftime('%Y-%m')})\n"
+    )
+    f.write(
+        f"Test 데이터: {len(test_data)}개월 ({test_data.index[0].strftime('%Y-%m')} ~ {test_data.index[-1].strftime('%Y-%m')})\n"
+    )
     f.write(f"최소값: {ts_series.min():.0f}\n")
     f.write(f"최대값: {ts_series.max():.0f}\n")
     f.write(f"평균값: {ts_series.mean():.2f}\n")
     f.write(f"표준편차: {ts_series.std():.2f}\n\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("모델 정보\n")
     f.write("=" * 80 + "\n")
@@ -332,34 +417,38 @@ with open(evaluation_filename, "w", encoding="utf-8") as f:
     f.write(f"AIC: {fitted_model.aic:.2f}\n")
     f.write(f"BIC: {fitted_model.bic:.2f}\n")
     f.write(f"Log Likelihood: {fitted_model.llf:.2f}\n\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("Train 데이터 평가 결과\n")
     f.write("=" * 80 + "\n")
     f.write(f"MAE (Mean Absolute Error): {train_mae:.2f}\n")
     f.write(f"RMSE (Root Mean Squared Error): {train_rmse:.2f}\n")
     f.write(f"MAPE (Mean Absolute Percentage Error): {train_mape:.2f}%\n\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("Test 데이터 평가 결과\n")
     f.write("=" * 80 + "\n")
     f.write(f"MAE (Mean Absolute Error): {test_mae:.2f}\n")
     f.write(f"RMSE (Root Mean Squared Error): {test_rmse:.2f}\n")
     f.write(f"MAPE (Mean Absolute Percentage Error): {test_mape:.2f}%\n\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("Test 데이터 상세 비교\n")
     f.write("=" * 80 + "\n")
-    f.write(f"{'월':<12} {'실제값':<10} {'예측값':<10} {'오차':<10} {'오차율(%)':<10}\n")
+    f.write(
+        f"{'월':<12} {'실제값':<10} {'예측값':<10} {'오차':<10} {'오차율(%)':<10}\n"
+    )
     f.write("-" * 60 + "\n")
     for i, date in enumerate(test_data.index):
         actual = test_data.iloc[i]
         predicted = forecast_mean.iloc[i]
         error = actual - predicted
         error_pct = (error / actual * 100) if actual != 0 else 0
-        f.write(f"{date.strftime('%Y-%m'):<12} {actual:<10.2f} {predicted:<10.2f} {error:<10.2f} {error_pct:<10.2f}\n")
+        f.write(
+            f"{date.strftime('%Y-%m'):<12} {actual:<10.2f} {predicted:<10.2f} {error:<10.2f} {error_pct:<10.2f}\n"
+        )
     f.write("\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("2025년 예측 결과\n")
     f.write("=" * 80 + "\n")
@@ -369,9 +458,11 @@ with open(evaluation_filename, "w", encoding="utf-8") as f:
         pred = future_mean.iloc[i]
         lower = future_ci.iloc[i, 0]
         upper = future_ci.iloc[i, 1]
-        f.write(f"{date.strftime('%Y-%m'):<12} {pred:<15.2f} {lower:<15.2f} {upper:<15.2f}\n")
+        f.write(
+            f"{date.strftime('%Y-%m'):<12} {pred:<15.2f} {lower:<15.2f} {upper:<15.2f}\n"
+        )
     f.write("\n")
-    
+
     f.write("=" * 80 + "\n")
     f.write("생성된 파일\n")
     f.write("=" * 80 + "\n")
@@ -405,4 +496,3 @@ print(f"  - {residual_filename}")
 print(f"  - {evaluation_filename}")
 
 print("\n" + "=" * 80)
-
