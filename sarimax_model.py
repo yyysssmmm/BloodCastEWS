@@ -12,6 +12,8 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from pmdarima import auto_arima
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
 import warnings
+import os
+from datetime import datetime
 
 warnings.filterwarnings("ignore")
 
@@ -38,6 +40,15 @@ print(f"   - 혈액형별: {BLOOD_TYPE}")
 print(f"   - 혈액원별: {BLOOD_CENTER}")
 print(f"   - 연령대: {AGE_GROUP}")
 print(f"   - 직업: {OCCUPATION}")
+
+# Segment 변수 생성 (파일명에 사용)
+SEGMENT = f"{GENDER}_{BLOOD_TYPE}_{BLOOD_CENTER}_{AGE_GROUP}_{OCCUPATION}"
+print(f"   - Segment: {SEGMENT}")
+
+# 결과 저장 폴더 생성
+OUTPUT_DIR = "sarimax_result"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+print(f"   - 결과 저장 폴더: {OUTPUT_DIR}/")
 
 # ============================================
 # 2. 데이터 로딩 및 필터링
@@ -236,8 +247,9 @@ ax2.legend(fontsize=10)
 ax2.grid(True, alpha=0.3, axis="y")
 
 plt.tight_layout()
-plt.savefig("sarimax_forecast_result.png", dpi=300, bbox_inches="tight")
-print("   - 그래프 저장 완료: sarimax_forecast_result.png")
+forecast_filename = os.path.join(OUTPUT_DIR, f"sarimax_forecast_result_{SEGMENT}.png")
+plt.savefig(forecast_filename, dpi=300, bbox_inches="tight")
+print(f"   - 그래프 저장 완료: {forecast_filename}")
 
 # 잔차 분석
 fig2, axes2 = plt.subplots(2, 2, figsize=(15, 10))
@@ -272,11 +284,106 @@ plot_acf(residuals, lags=24, ax=axes2[1, 1], title="잔차 ACF")
 axes2[1, 1].set_title("잔차 ACF (자기상관함수)", fontsize=12, fontweight="bold")
 
 plt.tight_layout()
-plt.savefig("sarimax_residual_analysis.png", dpi=300, bbox_inches="tight")
-print("   - 잔차 분석 그래프 저장 완료: sarimax_residual_analysis.png")
+residual_filename = os.path.join(OUTPUT_DIR, f"sarimax_residual_analysis_{SEGMENT}.png")
+plt.savefig(residual_filename, dpi=300, bbox_inches="tight")
+print(f"   - 잔차 분석 그래프 저장 완료: {residual_filename}")
 
 # ============================================
-# 11. 결과 요약 출력
+# 11. 평가 결과를 텍스트 파일로 저장
+# ============================================
+print("\n11. 평가 결과 저장 중...")
+
+evaluation_filename = os.path.join(OUTPUT_DIR, f"evaluation_{SEGMENT}.txt")
+
+with open(evaluation_filename, "w", encoding="utf-8") as f:
+    f.write("=" * 80 + "\n")
+    f.write("SARIMAX 모델 평가 결과\n")
+    f.write("=" * 80 + "\n\n")
+    
+    f.write(f"생성 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("입력 변수\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"성별: {GENDER}\n")
+    f.write(f"혈액형별: {BLOOD_TYPE}\n")
+    f.write(f"혈액원별: {BLOOD_CENTER}\n")
+    f.write(f"연령대: {AGE_GROUP}\n")
+    f.write(f"직업: {OCCUPATION}\n")
+    f.write(f"Segment: {SEGMENT}\n\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("데이터 정보\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"전체 시계열 길이: {len(ts_series)}개월\n")
+    f.write(f"기간: {ts_series.index[0].strftime('%Y-%m')} ~ {ts_series.index[-1].strftime('%Y-%m')}\n")
+    f.write(f"Train 데이터: {len(train_data)}개월 ({train_data.index[0].strftime('%Y-%m')} ~ {train_data.index[-1].strftime('%Y-%m')})\n")
+    f.write(f"Test 데이터: {len(test_data)}개월 ({test_data.index[0].strftime('%Y-%m')} ~ {test_data.index[-1].strftime('%Y-%m')})\n")
+    f.write(f"최소값: {ts_series.min():.0f}\n")
+    f.write(f"최대값: {ts_series.max():.0f}\n")
+    f.write(f"평균값: {ts_series.mean():.2f}\n")
+    f.write(f"표준편차: {ts_series.std():.2f}\n\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("모델 정보\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"최적 Order (p, d, q): {auto_model.order}\n")
+    f.write(f"최적 Seasonal Order (P, D, Q, s): {auto_model.seasonal_order}\n")
+    f.write(f"AIC: {fitted_model.aic:.2f}\n")
+    f.write(f"BIC: {fitted_model.bic:.2f}\n")
+    f.write(f"Log Likelihood: {fitted_model.llf:.2f}\n\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("Train 데이터 평가 결과\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"MAE (Mean Absolute Error): {train_mae:.2f}\n")
+    f.write(f"RMSE (Root Mean Squared Error): {train_rmse:.2f}\n")
+    f.write(f"MAPE (Mean Absolute Percentage Error): {train_mape:.2f}%\n\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("Test 데이터 평가 결과\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"MAE (Mean Absolute Error): {test_mae:.2f}\n")
+    f.write(f"RMSE (Root Mean Squared Error): {test_rmse:.2f}\n")
+    f.write(f"MAPE (Mean Absolute Percentage Error): {test_mape:.2f}%\n\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("Test 데이터 상세 비교\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"{'월':<12} {'실제값':<10} {'예측값':<10} {'오차':<10} {'오차율(%)':<10}\n")
+    f.write("-" * 60 + "\n")
+    for i, date in enumerate(test_data.index):
+        actual = test_data.iloc[i]
+        predicted = forecast_mean.iloc[i]
+        error = actual - predicted
+        error_pct = (error / actual * 100) if actual != 0 else 0
+        f.write(f"{date.strftime('%Y-%m'):<12} {actual:<10.2f} {predicted:<10.2f} {error:<10.2f} {error_pct:<10.2f}\n")
+    f.write("\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("2025년 예측 결과\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"{'월':<12} {'예측값':<15} {'하한(95%)':<15} {'상한(95%)':<15}\n")
+    f.write("-" * 60 + "\n")
+    for i, date in enumerate(future_dates):
+        pred = future_mean.iloc[i]
+        lower = future_ci.iloc[i, 0]
+        upper = future_ci.iloc[i, 1]
+        f.write(f"{date.strftime('%Y-%m'):<12} {pred:<15.2f} {lower:<15.2f} {upper:<15.2f}\n")
+    f.write("\n")
+    
+    f.write("=" * 80 + "\n")
+    f.write("생성된 파일\n")
+    f.write("=" * 80 + "\n")
+    f.write(f"- sarimax_forecast_result_{SEGMENT}.png: 예측 결과 시각화\n")
+    f.write(f"- sarimax_residual_analysis_{SEGMENT}.png: 잔차 분석\n")
+    f.write(f"- evaluation_{SEGMENT}.txt: 평가 결과 (본 파일)\n")
+    f.write("\n" + "=" * 80 + "\n")
+
+print(f"   - 평가 결과 저장 완료: {evaluation_filename}")
+
+# ============================================
+# 12. 결과 요약 출력
 # ============================================
 print("\n" + "=" * 80)
 print("모델 학습 및 예측 완료!")
@@ -293,8 +400,9 @@ print(f"  - Test 데이터 RMSE: {test_rmse:.2f}")
 print(f"  - Test 데이터 MAPE: {test_mape:.2f}%")
 
 print(f"\n[생성된 파일]")
-print(f"  - sarimax_forecast_result.png: 예측 결과 시각화")
-print(f"  - sarimax_residual_analysis.png: 잔차 분석")
+print(f"  - {forecast_filename}")
+print(f"  - {residual_filename}")
+print(f"  - {evaluation_filename}")
 
 print("\n" + "=" * 80)
 
